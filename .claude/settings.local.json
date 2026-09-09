@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(docker info *)",
+      "Read(//dev/**)",
+      "Bash(lspci)",
+      "Read(//proc/**)",
+      "Bash(service docker *)",
+      "Read(//mnt/c/**)",
+      "Bash(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -Command \"Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion | Format-List\")"
+    ]
+  }
+}

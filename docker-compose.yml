@@ -1,0 +1,58 @@
+# Optional alternative to ./scripts/start.sh — same container, declarative form.
+#
+# The compose plugin is NOT installed on this machine; install it first with:
+#   sudo apt install docker-compose-v2
+# Then:
+#   sudo docker compose up -d       # start
+#   sudo docker compose logs -f     # follow
+#   sudo docker compose down        # stop
+#
+# Unlike start.sh this cannot auto-detect the model, so MODEL must be set
+# in .env to the filename of the .gguf inside ./models.
+
+services:
+  llamacpp:
+    image: ${IMAGE:-ghcr.io/ggml-org/llama.cpp:server-intel}
+    container_name: ${CONTAINER_NAME:-llamacpp-arc}
+
+    # WSL2 exposes the Intel GPU as /dev/dxg — there is no /dev/dri here.
+    devices:
+      - /dev/dxg
+
+    volumes:
+      # Both the lib dir and the Windows driver store under /usr/lib/wsl are
+      # required; mounting only /usr/lib/wsl/lib silently falls back to CPU.
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+      - ./models:/models:ro
+
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+
+    environment:
+      ZES_ENABLE_SYSMAN: "1"
+      # Pin Level Zero so SYCL cannot pick the OpenCL CPU device instead.
+      ONEAPI_DEVICE_SELECTOR: "level_zero:0"
+      # LLAMA_ARG_* rather than flags: a model filename containing spaces
+      # would be word-split inside the shell command below.
+      LLAMA_ARG_MODEL: "/models/${MODEL:?set MODEL in .env to your .gguf filename}"
+      LLAMA_ARG_N_GPU_LAYERS: "${N_GPU_LAYERS:-99}"
+      LLAMA_ARG_CTX_SIZE: "${CTX_SIZE:-4096}"
+      LLAMA_ARG_THREADS: "${THREADS:-4}"
+      LLAMA_ARG_HOST: "0.0.0.0"
+      LLAMA_ARG_PORT: "${PORT:-8080}"
+
+    entrypoint: ["/bin/bash", "-c"]
+
+    # $$ escapes compose interpolation, so the image's own (long) oneAPI
+    # LD_LIBRARY_PATH is preserved and merely prefixed.
+    command:
+      - >
+        export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$$LD_LIBRARY_PATH;
+        exec /app/llama-server
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${PORT:-8080}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
