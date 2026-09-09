@@ -40,6 +40,13 @@ services:
       LLAMA_ARG_THREADS: "${THREADS:-4}"
       LLAMA_ARG_HOST: "0.0.0.0"
       LLAMA_ARG_PORT: "${PORT:-8080}"
+      # Speculative decoding. "none" disables it. The ${VAR:+...} form yields
+      # an empty string when VAR is unset, which llama.cpp treats as absent.
+      LLAMA_ARG_SPEC_TYPE: "${SPEC_TYPE:-none}"
+      LLAMA_ARG_SPEC_DRAFT_MODEL: "${SPEC_DRAFT_MODEL:+/models/${SPEC_DRAFT_MODEL}}"
+      LLAMA_ARG_N_GPU_LAYERS_DRAFT: "${SPEC_DRAFT_NGL:-99}"
+      # Vision projector; empty means text-only.
+      LLAMA_ARG_MMPROJ: "${MMPROJ:+/models/${MMPROJ}}"
 
     entrypoint: ["/bin/bash", "-c"]
 
