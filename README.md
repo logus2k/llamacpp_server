@@ -64,6 +64,7 @@ docker-compose.yml    optional declarative alternative to start.sh
 models/               put your .gguf files here
 scripts/
   common.sh           shared config, GPU flags, model auto-detection
+  dockerd-up.sh       start or restart the Docker daemon (no systemd here)
   gpu-check.sh        confirm the Arc GPU is visible to SYCL in-container
   start.sh            start the server, wait for /health, confirm GPU offload
   stop.sh             stop and remove the container
@@ -117,12 +118,40 @@ To give WSL more memory, set `memory=24GB` under `[wsl2]` in
 ## Two environment quirks on this machine
 
 **Docker does not start automatically.** This WSL distro runs WSL's own init
-rather than systemd, so there is no `docker.service`. The scripts detect this
-and start `dockerd` themselves (logging to `/tmp/dockerd.log`). To do it by hand:
+rather than systemd, so there is no `docker.service` — `systemctl restart
+docker` and `service docker restart` both fail, and `docker compose` reports
+`failed to connect to the docker API at unix:///var/run/docker.sock`.
+
+The `./scripts/*.sh` entry points start `dockerd` themselves (logging to
+`/tmp/dockerd.log`), but `docker compose` does not, so run this once per WSL
+session first:
 
 ```bash
-sudo nohup dockerd > /tmp/dockerd.log 2>&1 &
+./scripts/dockerd-up.sh              # start if not running
+./scripts/dockerd-up.sh --restart    # stop and start again
 ```
+
+By hand, the equivalents are:
+
+```bash
+sudo nohup dockerd > /tmp/dockerd.log 2>&1 &     # start
+sudo pkill dockerd && sudo nohup dockerd > /tmp/dockerd.log 2>&1 &   # restart
+```
+
+Restarting the daemon stops running containers; bring the server back with
+`sudo docker compose up -d`.
+
+**Permanent fix — enable systemd.** Add this to `/etc/wsl.conf`:
+
+```ini
+[boot]
+systemd=true
+```
+
+Then `wsl --shutdown` from PowerShell, reopen the terminal, and
+`sudo systemctl enable --now docker`. Docker then starts at boot and the
+usual `systemctl restart docker` works. This is worth doing on any machine
+that will run the server regularly.
 
 **Running it on another PC.** `models/` is git-ignored, so the ~6.2 GB of
 weights must be copied across separately. On a second WSL2 machine with an
