@@ -124,6 +124,17 @@ and start `dockerd` themselves (logging to `/tmp/dockerd.log`). To do it by hand
 sudo nohup dockerd > /tmp/dockerd.log 2>&1 &
 ```
 
+**Running it on another PC.** `models/` is git-ignored, so the ~6.2 GB of
+weights must be copied across separately. On a second WSL2 machine with an
+Intel GPU:
+
+```bash
+sudo apt install -y docker.io docker-compose-v2   # once
+sudo nohup dockerd > /tmp/dockerd.log 2>&1 &      # no systemd under WSL
+cd <this directory>                               # with models/ populated
+sudo docker compose up -d
+```
+
 **Docker needs `sudo`.** `devuser` is not in the `docker` group, so the scripts
 prefix `sudo` automatically. They skip it if the user is ever added to the group
 (`sudo usermod -aG docker $USER`, then restart WSL) — note that group membership

@@ -1,14 +1,16 @@
-# Optional alternative to ./scripts/start.sh — same container, declarative form.
+# Alternative to ./scripts/start.sh — same container, declarative form.
+# Verified working; needs the compose plugin (sudo apt install docker-compose-v2).
 #
-# The compose plugin is NOT installed on this machine; install it first with:
-#   sudo apt install docker-compose-v2
-# Then:
 #   sudo docker compose up -d       # start
-#   sudo docker compose logs -f     # follow
+#   sudo docker compose logs -f     # follow (includes the sysman warning spam)
 #   sudo docker compose down        # stop
 #
-# Unlike start.sh this cannot auto-detect the model, so MODEL must be set
-# in .env to the filename of the .gguf inside ./models.
+# Settings come from .env. Unlike start.sh this cannot auto-detect the model,
+# so MODEL must name the .gguf inside ./models.
+#
+# WSL2 ONLY: /dev/dxg and /usr/lib/wsl exist only under WSL. On native Linux
+# with an Intel GPU, replace the device with /dev/dri, drop the /usr/lib/wsl
+# mount, and drop the LD_LIBRARY_PATH prefix from the command.
 
 services:
   llamacpp:
