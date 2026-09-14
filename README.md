@@ -67,6 +67,7 @@ scripts/
   dockerd-up.sh       start or restart the Docker daemon (no systemd here)
   gpu-check.sh        confirm the Arc GPU is visible to SYCL in-container
   start.sh            start the server, wait for /health, confirm GPU offload
+  status.sh           loading / ready / stuck, plus memory and last logs
   stop.sh             stop and remove the container
   logs.sh             follow the container logs
   test-chat.sh        send a prompt, print the reply and tok/s
@@ -306,10 +307,31 @@ offload as above; also check `N_GPU_LAYERS` is high enough for the layer count.
 
 **Web UI spins on "loading model", or shows `Server Error: Loading model`** —
 the server returns HTTP 503 with that text until the weights finish loading,
-which takes ~75 s here (longer with the vision projector). The UI shows it as
-an error rather than a wait. Reload the page once `./scripts/start.sh` prints
-"Server is up". Note that `./scripts/bench.sh` restarts the server for every
-mode, so the UI is unusable while a benchmark runs.
+which takes ~80 s from cold here. The UI presents that as an error rather
+than a wait, and it looks identical whether the load is progressing or wedged.
+Check before killing anything:
+
+```bash
+./scripts/status.sh
+```
+
+It reports how long the container has been up, whether `/health` returns 503
+(still loading) or 200 (ready), free memory, and the last log lines. If it
+says READY, just reload the page.
+
+To kill it — either works, whether it was started by `start.sh` or compose:
+
+```bash
+./scripts/stop.sh            # remove the container
+sudo docker compose down     # same, and removes the compose network
+sudo docker kill llamacpp-arc   # last resort if it ignores the above
+```
+
+Then start it again with `./scripts/start.sh` or `sudo docker compose up -d`.
+
+If it never reaches READY, the usual causes are memory (exit code 137 — see
+`status.sh`) and a benchmark running: `./scripts/bench.sh` restarts the server
+for every mode, so the UI is unusable while it runs.
 
 **`curl http://localhost:8080/` returns HTTP 415 "gzip is not supported by
 this browser"** — expected, not a fault. The web UI is served gzip-compressed
