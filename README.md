@@ -177,7 +177,7 @@ in one batched pass. On this iGPU, generation is memory-bandwidth-bound, so
 verifying a batch costs little more than generating one token — which is why
 the wins below are large. The catch is that only *accepted* drafts help.
 
-This build (`b10868`) offers two families:
+This build (`b11371`) offers two families:
 
 - **`draft-mtp`** — uses `mtp-gemma-4-E4B-it.gguf`, a 98 MB Multi-Token
   Prediction head trained for this exact checkpoint. Tokenizer compatibility
@@ -195,6 +195,11 @@ Measured here (greedy sampling, 200-token generations, tok/s):
 | `ngram-simple` | 22.9 (+3%) | 32.1 (+43%) | 28.8 (+29%) |
 
 Draft acceptance under `draft-mtp` was 46% / 91% / 75% respectively.
+
+Re-measured after upgrading to `b11371` (two runs, averaged): `none`
+22.1 / 21.8 / 21.8, `draft-mtp` 31.2 / 51.7 / 44.5 — on par overall, code
+editing about 10% faster, open prose about 3% slower (within run-to-run
+noise). Acceptance rates were unchanged.
 
 Draft length (`SPEC_DRAFT_N_MAX`) was swept; the default of 3 is the best of
 those measured, because acceptance falls off as drafts get longer:
@@ -341,7 +346,7 @@ does not. Use `curl --compressed` to fetch it from the shell.
 ## What was verified
 
 On this machine (Intel Core Ultra 7 268V, Arc 140V, driver 32.0.101.8508,
-Ubuntu 26.04 on WSL2 kernel 6.18.40.1, Docker 29.1.3, llama.cpp `b10868`)
+Ubuntu 26.04 on WSL2 kernel 6.18.40.1, Docker 29.1.3, llama.cpp `b11371`)
 with `gemma-4-E4B-it-UD-Q4_K_XL.gguf` (7.5B, 5.1 GB):
 
 - **GPU is genuinely in use.** `sycl-ls` in-container reports
