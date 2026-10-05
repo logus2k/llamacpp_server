@@ -56,6 +56,7 @@ printf '\n'
 # spaces or non-ASCII characters would otherwise be word-split.
 "${DOCKER[@]}" run -d \
   --name "$CONTAINER_NAME" \
+  --restart unless-stopped \
   "${GPU_ARGS[@]}" \
   "${ENV_ARGS[@]}" \
   -v "$MODELS_DIR":/models:ro \

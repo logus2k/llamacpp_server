@@ -16,6 +16,8 @@ services:
   llamacpp:
     image: ${IMAGE:-ghcr.io/ggml-org/llama.cpp:server-intel}
     container_name: ${CONTAINER_NAME:-llamacpp-arc}
+    # Back after a WSL/Windows restart, once dockerd starts (systemd: see README)
+    restart: unless-stopped
 
     # WSL2 exposes the Intel GPU as /dev/dxg — there is no /dev/dri here.
     devices:
